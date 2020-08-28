@@ -27,7 +27,7 @@
                 game()
             })
 
-            wybor();
+            startMenu();
             function updateLists() {
                 let a = document.getElementById('s30')
                 a.innerHTML = '30s'
@@ -100,7 +100,7 @@
                 else if (miliseconds < 100) miliseconds = '0' + miliseconds
                 return minutes + ":" + seconds + "." + miliseconds
             }
-            function wybor() {
+            function startMenu() {
                 updateLists();
                 document.getElementById('loseend').style.display = "none";
                 document.getElementById("intro").style.display = "block"
@@ -282,12 +282,12 @@
                         console.log(document.cookie)
                         setCookie(gameMode, nick)
                         updateLists();
-                        wybor()
+                        startMenu()
                     }
 
                     function listeneros() {
                         document.getElementById("option3").removeEventListener('click', listeneros)
-                        wybor()
+                        startMenu()
                     }
                 }
 
