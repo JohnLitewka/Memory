@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.onload = function () {
+            document.getElementById("firstOption").addEventListener("click", function () {
+                czas = 30000;
+                document.getElementById("intro").style.display = "none"
+                game()
+            })
+
+            document.getElementById("secondOption").addEventListener("click", function () {
+                czas = 60000;
+                document.getElementById("intro").style.display = "none"
+                game()
+            })
+
+            document.getElementById("thirdOption").addEventListener("click", function () {
+                czas = 90000;
+                document.getElementById("intro").style.display = "none"
+                game()
+            })
+
+            wybor();
+            function updateLists() {
+                let a = document.getElementById('s30')
+                a.innerHTML = '30s'
+
+                let b = document.getElementById('s60')
+                b.innerHTML = '60s'
+
+                let c = document.getElementById('s90')
+                c.innerHTML = '90s'
+
+                let left = getCookie('tryb30').split('|')
+                let mid = getCookie('tryb60').split('|')
+                let right = getCookie('tryb90').split('|')
+                if (left != "") {
+                    left.forEach(function (element) {
+                        let c = element
+                        c = c.split('_')
+                        c[0] = timeFormat(c[0])
+                        let li = document.createElement('li')
+                        li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                        document.getElementById("s30").appendChild(li)
+                    })
+                }
+                if (mid != "") {
+                    mid.forEach(function (element) {
+                        let c = element
+                        c = c.split('_')
+                        c[0] = timeFormat(c[0])
+                        let li = document.createElement('li')
+                        li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                        document.getElementById("s60").appendChild(li)
+                    })
+                }
+                if (right != "") {
+                    right.forEach(function (element) {
+                        let c = element
+                        c = c.split('_')
+                        c[0] = timeFormat(c[0])
+                        let li = document.createElement('li')
+                        li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                        document.getElementById("s90").appendChild(li)
+                    })
+                }
+            }
+            function getCookie(mode) {
+                let returning = ""
+                var tab = document.cookie.split(";")
+                let name = mode + '='
+                tab.forEach(function (element) {
+                    let c = element
+                    if (c.indexOf(name) != -1) {
+                        while (c.charAt(0) == ' ') {
+                            c = c.substring(1)
+                        }
+                        if (c.indexOf(name) == 0) {
+                            returning += c.substring(name.length, c.length)
+                        }
+                    }
+                })
+                return returning
+            }
+
+            function timeFormat(ms) {
+                let minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+                let seconds = Math.floor((ms % (1000 * 60)) / 1000)
+                let miliseconds = ms % 1000
+                if (minutes < 10) minutes = '0' + minutes
+                if (seconds < 10) seconds = '0' + seconds
+                if (miliseconds < 10) miliseconds = '00' + miliseconds
+                else if (miliseconds < 100) miliseconds = '0' + miliseconds
+                return minutes + ":" + seconds + "." + miliseconds
+            }
+            function wybor() {
+                updateLists();
+                document.getElementById('loseend').style.display = "none";
+                document.getElementById("intro").style.display = "block"
+                document.getElementById("playArea").style.display = "none"
+                document.getElementById("timer").style.display = "none"
+                document.getElementById('end').style.display = "none";
+            }
+
+            function game() {
+                document.getElementById("header").innerText += (' (' + czas / 1000 + '[s]' + ')')
+                node = document.getElementById("playArea")
+                while (node.hasChildNodes()) {
+                    node.removeChild(node.lastChild);
+                }
+                var BreakException = {}
+                let height = 4;
+                let width = 4;
+                let count = 0
+                let objs = []
+                let actualClicked = []
+                let swap = false
+                let goingOn = false
+                let sources = []
+                for (let i = 1; i <= 8; i++) { sources.push("img/" + i + ".jpg"); sources.push("img/" + i + ".jpg") }
+                shuffle(sources)
+                document.getElementById("playArea").style.display = "block"
+                for (let i = 0; i < height; i++) {
+                    for (let j = 0; j < width; j++) {
+                        let left = (j * 101).toString()
+                        let top = (i * 101).toString()
+                        let img = document.createElement('img')
+                        //tablica reprezentujaca id src i zmienna clicked kazdego obrazka
+                        objs.push({
+                            id: 'id' + count,
+                            src: sources[count],
+                            clicked: false
+                        })
+                        img.src = 'img/0.jpg'
+                        document.getElementById("playArea").appendChild(img).setAttribute('style', 'left:' + left + "px; top:" + top + 'px;')
+                        img.id = 'id' + count
+                        img.addEventListener("mousedown", listener)
+                        count++
+                    }
+                }
+
+
+                function listener(e) {
+                    if (!goingOn) {
+                        goingOn = true
+                        timer(new Date().getTime())
+                    }
+                    let target = (e.target.id).slice(2)
+                    //swap - czy dzieje sie jakies obrocenie obrazkow
+                    if (swap == false) {
+                        e.target.src = objs[target].src
+                        //decyzja o dodaniu do arraya actualClicked
+                        if (objs[target].clicked == false) {
+                            actualClicked.push(objs[target])
+                            objs[target].clicked = true
+                        }
+                        //porownanie przy rozmiarze arraya = 2 
+                        if (actualClicked.length == 2) {
+                            if (compare()) deleteimg()
+                            else reswaping()
+                        }
+                    }
+                }
+
+
+                //funkcja obslugi obrocenia roznych obrazkow
+                async function reswaping() {
+                    swap = true
+                    await sleep(300)
+                    actualClicked.forEach(function (element) {
+                        document.getElementById(element.id).src = 'img/0.jpg'
+                        objs[(element.id).slice(2)].clicked = false
+                    }, this);
+                    actualClicked = []
+                    swap = false
+                }
+
+
+                //funkcja obslugi obrocenia tych samych obrazkow
+                async function deleteimg() {
+                    swap = true
+                    await sleep(300);
+                    actualClicked.forEach(function (element) {
+                        document.getElementById(element.id).removeEventListener("mousedown", listener);
+                        objs[(element.id).slice(2)].clicked = false
+                    }, this);
+                    actualClicked = []
+                    swap = false
+                    count -= 2
+                    if (count == 0) end('wygrana')
+                }
+
+
+                //porownanie pola src z actualClicka
+                function compare() {
+                    if (actualClicked[0].src == actualClicked[1].src) return true;
+                    else return false;
+                }
+
+                //funkcja mieszajaca araya , credits : knuth - shuffle https://bost.ocks.org/mike/shuffle/
+                function shuffle(srcs) {
+                    let m = srcs.length, t, i;
+                    // While there remain elements to shuffle…
+                    while (m) {
+                        // Pick a remaining element…
+                        i = Math.floor(Math.random() * m--);
+                        // And swap it with the current element.
+                        t = srcs[m];
+                        srcs[m] = srcs[i];
+                        srcs[i] = t;
+                    }
+                    return srcs;
+                }
+
+                function sleep(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                }
+
+
+                //Timer
+                function timer(startTime) {
+                    document.getElementById("timer").style.display = "block"
+                    timeit()
+                    function timeit() {
+                        if (goingOn) {
+                            currTime = new Date().getTime() - startTime
+                            let timeleft = czas - currTime
+                            if (timeleft < 0) end('przegrana')
+                            let minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60))
+                            let seconds = Math.floor((timeleft % (1000 * 60)) / 1000)
+                            let miliseconds = timeleft % 1000
+                            if (minutes < 10) minutes = '0' + minutes
+                            if (seconds < 10) seconds = '0' + seconds
+                            if (miliseconds < 10) miliseconds = '00' + miliseconds
+                            else if (miliseconds < 100) miliseconds = '0' + miliseconds
+                            document.getElementById("time").innerText = minutes + ":" + seconds + "." + miliseconds
+                            if (((czas - currTime) / czas * 100) < 20) (document.getElementById("pasek")).style.backgroundColor = "red"
+                            else (document.getElementById("pasek")).style.backgroundColor = "#b1b1b1"
+                            document.getElementById("pasek").style.width = (czas - currTime) / czas * 100 + '%'
+                            requestAnimationFrame(timeit)
+                        }
+                    }
+                }
+
+                //zakonczenie gry
+                function end(result) {
+                    document.getElementById("header").innerText = 'Memory'
+                    goingOn = false;
+                    notification(result)
+                }
+
+                //okienko z inputem
+
+                function notification(result) {
+                    if (result == 'wygrana') {
+                        document.getElementById("submit").addEventListener("click", listenerek)
+                        document.getElementById("playArea").style.display = "none"
+                        document.getElementById("intro").style.display = "none"
+                        document.getElementById('end').style.display = "block";
+                    }
+                    else {
+                        document.getElementById("timer").style.display = "none"
+                        document.getElementById("playArea").style.display = "none"
+                        document.getElementById("intro").style.display = "none"
+                        document.getElementById('loseend').style.display = "block";
+                        document.getElementById("option3").addEventListener('click', listeneros)
+                    }
+
+                    function listenerek() {
+                        document.getElementById("submit").removeEventListener("click", listenerek)
+                        a = new Date()
+                        a = new Date(a.getTime() + 1000 * 60 * 60 * 24 * 1000)
+                        let nick = document.getElementById("input").value
+                        let gameMode = 'tryb' + czas / 1000
+                        console.log(document.cookie)
+                        setCookie(gameMode, nick)
+                        updateLists();
+                        wybor()
+                    }
+
+                    function listeneros() {
+                        document.getElementById("option3").removeEventListener('click', listeneros)
+                        wybor()
+                    }
+                }
+
+                function cleanArray(actual) {
+                    var newArray = new Array();
+                    for (var i = 0; i < actual.length; i++) {
+                        if (actual[i]) {
+                            newArray.push(actual[i]);
+                        }
+                    }
+                    return newArray;
+                }
+
+                function setCookie(mode, nick) {
+                    let cookie = getCookie(mode)
+                    if (cookie != "") {
+                        let outerTab = cookie.split("|")
+                        outerTab = cleanArray(outerTab)
+                        let cString = currTime + '_' + encodeURIComponent(nick)
+                        if (outerTab.length >= 1) {
+                            try {
+                                outerTab.forEach(function (element, index) {
+                                    if (currTime < element.slice(0, element.lastIndexOf('_'))) {
+                                        outerTab.splice(index, 0, cString)
+                                        console.log('mniejszy')
+                                        throw BreakException
+                                    } else if (index == outerTab.length - 1) {
+                                        console.log(index)
+                                        console.log('na sam koniec')
+                                        outerTab.push(cString)
+                                    }
+                                })
+                            } catch (e) {
+                                if (e !== BreakException) throw e
+                            }
+                        } else outerTab.push(cString)
+                        outerTab = outerTab.slice(0, 10)
+                        let finalString = mode + '='
+                        outerTab.forEach(function (element, index) {
+                            if (index != 0) finalString += '|' + element
+                            else finalString += element
+                        })
+                        document.cookie = finalString + ';expires=' + a.toUTCString()
+                    } else {
+                        let cString = currTime + '_' + encodeURIComponent(nick)
+                        let finalString = mode + '=' + cString
+                        document.cookie = finalString
+
+                    }
+                }
+
+                function getCookie(mode) {
+                    let returning = ""
+                    var tab = document.cookie.split(";")
+                    let name = mode + '='
+                    tab.forEach(function (element) {
+                        let c = element
+                        if (c.indexOf(name) != -1) {
+                            while (c.charAt(0) == ' ') {
+                                c = c.substring(1)
+                            }
+                            if (c.indexOf(name) == 0) {
+                                returning += c.substring(name.length, c.length)
+                            }
+                        }
+                    })
+                    return returning
+                }
+
+                updateLists();
+                function updateLists() {
+                    let a = document.getElementById('s30')
+                    a.innerHTML = '30s'
+
+                    let b = document.getElementById('s60')
+                    b.innerHTML = '60s'
+
+                    let c = document.getElementById('s90')
+                    c.innerHTML = '90s'
+
+                    let left = getCookie('tryb30').split('|')
+                    let mid = getCookie('tryb60').split('|')
+                    let right = getCookie('tryb90').split('|')
+                    if (left != "") {
+                        left.forEach(function (element) {
+                            let c = element
+                            c = c.split('_')
+                            c[0] = timeFormat(c[0])
+                            let li = document.createElement('li')
+                            li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                            document.getElementById("s30").appendChild(li)
+                        })
+                    }
+                    if (mid != "") {
+                        mid.forEach(function (element) {
+                            let c = element
+                            c = c.split('_')
+                            c[0] = timeFormat(c[0])
+                            let li = document.createElement('li')
+                            li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                            document.getElementById("s60").appendChild(li)
+                        })
+                    }
+                    if (right != "") {
+                        right.forEach(function (element) {
+                            let c = element
+                            c = c.split('_')
+                            c[0] = timeFormat(c[0])
+                            let li = document.createElement('li')
+                            li.innerText = (decodeURIComponent(c[1]) + ' - ' + c[0])
+                            document.getElementById("s90").appendChild(li)
+                        })
+                    }
+                }
+                function timeFormat(ms) {
+                    let minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+                    let seconds = Math.floor((ms % (1000 * 60)) / 1000)
+                    let miliseconds = ms % 1000
+                    if (minutes < 10) minutes = '0' + minutes
+                    if (seconds < 10) seconds = '0' + seconds
+                    if (miliseconds < 10) miliseconds = '00' + miliseconds
+                    else if (miliseconds < 100) miliseconds = '0' + miliseconds
+                    return minutes + ":" + seconds + "." + miliseconds
+                }
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="obwoluta">
+        <h1 id="header">Memory</h1>
+        <div id="timer">
+            <span id="time"></span>
+            <div id="pasek"></div>
+        </div>
+        <div id="playArea">
+
+        </div>
+        <div id="intro">
+            <img src="img/intro.png" alt="" usemap="#Map" />
+
+            <map name="Map" id="Map">
+                <area alt="" title="" href="#" shape="poly" coords="99,50,173,190,48,145" id="firstOption" />
+                <area alt="" title="" href="#" shape="poly" coords="305,141,357,236,232,282" id="secondOption" />
+                <area alt="" title="" href="#" shape="poly" coords="99,238,173,378,48,334" id="thirdOption" />
+            </map>
+        </div>
+        <div id="end">
+            <p id="communicate">Wygrana! Wpisz swoje imie</p>
+            <input type="text" id="input">
+            <input type="submit" id="submit">
+            <div id="option2"></div>
+        </div>
+        <div id="loseend">
+            <p id="losecommunicate">Przegrales!</p>
+            <button id="option3">Powrot do menu glownego</button>
+        </div>
+        <div id="list">
+            <ol id="s30">30s
+            </ol>
+            <ol id="s60">60s
+            </ol>
+            <ol id="s90"> 90s
+            </ol>
+        </div>
+    </div>
+</body>
+
+</html>
